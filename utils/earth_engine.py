@@ -8,19 +8,20 @@ import json
 import ee
 
 def init_earth_engine():
-    raw = os.getenv("GEE_CREDENTIALS_JSON")
-    if not raw:
-        raise ValueError("La variable de entorno GEE_CREDENTIALS_JSON no está definida.")
-    
-    # Primera carga (para quitar comillas escapadas)
-    cleaned = json.loads(raw)
+    # Cargar la variable de entorno como string JSON
+    credentials_json = os.environ.get("GEE_CREDENTIALS_JSON")
 
-    # Segunda carga (para convertir a dict)
-    creds = json.loads(cleaned)
+    if not credentials_json:
+        raise ValueError("La variable de entorno GEE_CREDENTIALS_JSON no está definida")
 
-    credentials = ee.ServiceAccountCredentials(creds["client_email"], key_data=creds)
+    # Convertir el string JSON a dict
+    creds = json.loads(credentials_json)
+
+    # Autenticarse con Earth Engine usando la cuenta de servicio
+    credentials = ee.ServiceAccountCredentials(creds["client_email"], key_data=credentials_json)
+
+    # Inicializar Earth Engine con esas credenciales
     ee.Initialize(credentials)
-    print("✅ Earth Engine inicializado correctamente.")
 
     
 '''
