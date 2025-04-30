@@ -6,7 +6,10 @@ app = Flask(__name__)
 
 # Inicializar Earth Engine al arrancar la app
 init_earth_engine()
-
+@app.route("/")
+def hello():
+    return "API Flask con Earth Engine"
+    
 @app.route('/CalculoAreaGEE', methods=['POST'])
 def calcular_area():
     try:
@@ -26,5 +29,11 @@ def calcular_area():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/googleearthengineIcon.ico')
+def favicon():
+    return send_from_directory('static', 'googleearthengineIcon.ico')
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
