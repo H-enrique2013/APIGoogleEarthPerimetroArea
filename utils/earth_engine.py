@@ -1,5 +1,6 @@
 import ee
 import os
+import json
 
 
 def init_earth_engine():
