@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Inicializar Earth Engine al arrancar la app
 init_earth_engine()
 
-@app.route('/area', methods=['POST'])
+@app.route('/CalculoAreaGEE', methods=['POST'])
 def calcular_area():
     try:
         geojson = request.get_json()
