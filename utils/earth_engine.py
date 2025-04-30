@@ -1,4 +1,5 @@
 import ee
+import os
 
 
 def init_earth_engine():
