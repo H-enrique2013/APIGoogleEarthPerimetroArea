@@ -2,22 +2,22 @@ import ee
 import os
 import json
 
+
 def init_earth_engine():
     credentials_json = os.environ.get("GEE_CREDENTIALS_JSON")
 
     if not credentials_json:
-        raise ValueError("La variable de entorno GEE_CREDENTIALS_JSON no está definida.")
+        raise ValueError("Falta GEE_CREDENTIALS_JSON")
 
-    # Aquí convertimos el string JSON a dict
+    # Primer loads convierte el string escapado a un JSON real
     try:
-        creds_dict = json.loads(credentials_json)
-    except json.JSONDecodeError as e:
-        raise ValueError("El JSON en GEE_CREDENTIALS_JSON no es válido.") from e
+        actual_json = json.loads(credentials_json)
+    except Exception as e:
+        raise ValueError("JSON de GEE_CREDENTIALS_JSON malformado") from e
 
-    # Usamos creds_dict para client_email, y el string original como key_data
     credentials = ee.ServiceAccountCredentials(
-        creds_dict["client_email"],
-        key_data=credentials_json
+        actual_json["client_email"],
+        key_data=json.dumps(actual_json)  # ahora el dict se vuelve a convertir a string para key_data
     )
 
     ee.Initialize(credentials)
