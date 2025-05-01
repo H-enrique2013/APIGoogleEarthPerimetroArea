@@ -3,7 +3,7 @@ from utils.earth_engine import init_earth_engine
 import ee
 
 app = Flask(__name__)
-
+CORS(app)  # Permite a todos los orígenes
 # Inicializar Earth Engine al arrancar la app
 init_earth_engine()
 @app.route("/")
