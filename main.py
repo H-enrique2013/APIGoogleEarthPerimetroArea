@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 from utils.earth_engine import init_earth_engine
 import ee
 
