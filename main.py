@@ -60,8 +60,11 @@ def calcular_area():
 def calcular_ndvi_area_perimetro():
     try:
         geojson = request.get_json()
-        feature = geojson['features'][0]
+        if not geojson:
+            return jsonify({"error": "GeoJSON no proporcionado"}), 400
+            
         geometry = ee.Geometry(feature['geometry'])
+        geometry = ee.Geometry(geojson["features"][0]["geometry"])
 
         # Cálculo área y perímetro
         area_ha = geometry.area().divide(10000)
