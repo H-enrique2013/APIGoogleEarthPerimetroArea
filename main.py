@@ -11,7 +11,30 @@ init_earth_engine()
 @app.route("/")
 def hello():
     return "API Flask con Earth Engine"
-    
+
+
+
+@app.route('/getMapId', methods=['POST'])
+def get_map_id():
+    data = request.get_json()
+    start = data.get('startDate')
+    end = data.get('endDate')
+    index = data.get('index')
+
+    collection = ee.ImageCollection("COPERNICUS/S2_SR") \
+        .filterDate(start, end) \
+        .median()
+
+    if index == 'NDVI':
+        ndvi = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        image = ndvi.visualize(min=0, max=1, palette=['white', 'green'])
+    else:
+        image = collection.visualize(min=0, max=3000, bands=['B4', 'B3', 'B2'])
+
+    map_id_dict = image.getMapId()
+    return jsonify(map_id_dict)
+
+'''   
 @app.route('/CalculoAreaGEE', methods=['POST'])
 def calcular_area():
     try:
@@ -30,6 +53,45 @@ def calcular_area():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+'''
+
+@app.route('/CalculoAreaNDVIPerimetro', methods=['POST'])
+def calcular_ndvi_area_perimetro():
+    try:
+        geojson = request.get_json()
+        feature = geojson['features'][0]
+        geometry = ee.Geometry(feature['geometry'])
+
+        # Cálculo área y perímetro
+        area_ha = geometry.area().divide(10000)
+        perimetro_m = geometry.perimeter()
+
+        # NDVI promedio
+        imagen = ee.ImageCollection("COPERNICUS/S2_SR") \
+            .filterBounds(geometry) \
+            .filterDate('2024-01-01', '2024-03-01') \
+            .median()
+
+        ndvi = imagen.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        ndvi_prom = ndvi.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=geometry,
+            scale=10,
+            maxPixels=1e9
+        ).get('NDVI')
+
+        resultado = ee.Dictionary({
+            'area_ha': area_ha,
+            'perimetro_m': perimetro_m,
+            'ndvi_promedio': ndvi_prom
+        }).getInfo()
+
+        return jsonify(resultado)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/googleearthengineIcon.ico')
