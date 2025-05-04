@@ -13,26 +13,36 @@ def hello():
     return "API Flask con Earth Engine"
 
 
-
 @app.route('/getMapId', methods=['POST'])
 def get_map_id():
-    data = request.get_json()
-    start = data.get('startDate')
-    end = data.get('endDate')
-    index = data.get('index')
+    try:
+        data = request.get_json()
+        start = data.get('startDate')
+        end = data.get('endDate')
+        index = data.get('index')
 
-    collection = ee.ImageCollection("COPERNICUS/S2_SR") \
-        .filterDate(start, end) \
-        .median()
+        collection = ee.ImageCollection("COPERNICUS/S2_SR").filterDate(start, end).median()
 
-    if index == 'NDVI':
-        ndvi = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
-        image = ndvi.visualize(min=0, max=1, palette=['white', 'green'])
-    else:
-        image = collection.visualize(min=0, max=3000, bands=['B4', 'B3', 'B2'])
+        if index == 'NDVI':
+            ndvi = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            vis_params = {'min': 0, 'max': 1, 'palette': ['white', 'green']}
+            image = ndvi.visualize(**vis_params)
+        else:
+            vis_params = {'min': 0, 'max': 3000, 'bands': ['B4', 'B3', 'B2']}
+            image = collection.visualize(**vis_params)
 
-    map_id_dict = image.getMapId()
-    return jsonify(map_id_dict)
+        map_id = ee.data.getMapId({'image': image})
+
+        # Extraer solo los datos serializables
+        return jsonify({
+            'mapid': map_id['mapid'],
+            'token': map_id['token']
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 '''   
 @app.route('/CalculoAreaGEE', methods=['POST'])
@@ -60,10 +70,9 @@ def calcular_area():
 def calcular_ndvi_area_perimetro():
     try:
         geojson = request.get_json()
-        if not geojson:
-            return jsonify({"error": "GeoJSON no proporcionado"}), 400
-            
-        geometry = ee.Geometry(feature['geometry'])
+        if not geojson or "features" not in geojson or len(geojson["features"]) == 0:
+            return jsonify({"error": "GeoJSON no proporcionado o inválido"}), 400
+
         geometry = ee.Geometry(geojson["features"][0]["geometry"])
 
         # Cálculo área y perímetro
@@ -74,8 +83,10 @@ def calcular_ndvi_area_perimetro():
         imagen = ee.ImageCollection("COPERNICUS/S2_SR") \
             .filterBounds(geometry) \
             .filterDate('2024-01-01', '2024-03-01') \
+            .select(['B4', 'B8']) \
             .median()
 
+     
         ndvi = imagen.normalizedDifference(['B8', 'B4']).rename('NDVI')
         ndvi_prom = ndvi.reduceRegion(
             reducer=ee.Reducer.mean(),
@@ -94,7 +105,6 @@ def calcular_ndvi_area_perimetro():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/googleearthengineIcon.ico')
