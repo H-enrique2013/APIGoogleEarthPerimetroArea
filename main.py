@@ -44,28 +44,6 @@ def get_map_id():
 
 
 
-'''   
-@app.route('/CalculoAreaGEE', methods=['POST'])
-def calcular_area():
-    try:
-        geojson = request.get_json()
-        if not geojson:
-            return jsonify({"error": "GeoJSON no proporcionado"}), 400
-
-        geometry = ee.Geometry(geojson["features"][0]["geometry"])
-        area_m2 = geometry.area().getInfo()
-        area_ha = area_m2 / 10000
-
-        return jsonify({
-            "area_m2": round(area_m2, 2),
-            "area_ha": round(area_ha, 4)
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-'''
-
 @app.route('/CalculoAreaNDVIPerimetro', methods=['POST'])
 def calcular_ndvi_area_perimetro():
     try:
@@ -78,6 +56,10 @@ def calcular_ndvi_area_perimetro():
         # Cálculo área y perímetro
         area_ha = geometry.area().divide(10000)
         perimetro_m = geometry.perimeter()
+        # Cálculo del centroide
+        centroide = geometry.centroid()
+        centroide_coords = centroide.coordinates().getInfo()
+        centroide_text = f"{centroide_coords[1]},{centroide_coords[0]}"  # Lat,Lon
 
         # NDVI promedio
         imagen = ee.ImageCollection("COPERNICUS/S2_SR") \
@@ -98,7 +80,8 @@ def calcular_ndvi_area_perimetro():
         resultado = ee.Dictionary({
             'area_ha': area_ha,
             'perimetro_m': perimetro_m,
-            'ndvi_promedio': ndvi_prom
+            'ndvi_promedio': ndvi_prom,
+            'centroide_text':centroide_text
         }).getInfo()
 
         return jsonify(resultado)
