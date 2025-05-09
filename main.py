@@ -162,7 +162,7 @@ def calcular_ndvi_area_perimetro():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/SectorEstadistico', methods=['POST'])
-def sector_Estadistico():
+def sector_estadistico():
     try:
         data=request.get_json()
         dep=data.get('Departamento')
