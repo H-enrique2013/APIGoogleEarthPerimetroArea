@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
+from model import sectorEstadistico
+import json
 from utils.earth_engine import init_earth_engine
 import ee
 
@@ -159,6 +160,25 @@ def calcular_ndvi_area_perimetro():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/SectorEstadistico', methods=['POST'])
+def sector_Estadistico():
+    try:
+        data=request.get_json()
+        dep=data.get('Departamento')
+        prov=data.get('Provincia')
+        distr=data.get('Distrito')
+        sector=data.get('Sector')
+        if not all([dep,prov,distr,sector]):
+            return jsonify({'error': 'Faltan parámetros requeridos'}), 400
+
+        gdf = sectorEstadistico(dep, prov, distr, sector)  # devuelve GeoDataFrame
+        solo_geom = gdf[['geometry']]  # <-- solo geometría
+        geojson_str = solo_geom.to_json()
+        return jsonify(json.loads(geojson_str))
+
+    except Exception as e:
+        return jsonify({'error':str(e)}),500
 
 
 @app.route('/googleearthengineIcon.ico')
