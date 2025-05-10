@@ -18,86 +18,135 @@ def hello():
 def get_map_id():
     try:
         data = request.get_json()
+        dep=data.get('departamento')
+        prov=data.get('provincia')
+        distr=data.get('distrito')
+        sector=data.get('sector')
         satellite = data.get('satellite')
         start = data.get('startDate')
         end = data.get('endDate')
+        pnubosidad=data.get('porcentajeNubosidad')
         index = data.get('index')
 
-        if not all([start, end, index, satellite]):
+        if not all([start, end, index,pnubosidad, satellite,dep,prov,distr,sector]):
             return jsonify({'error': 'Faltan parámetros requeridos'}), 400
 
-        # Obtener la colección según el satélite
+        
+        gdf = sectorEstadistico(dep, prov, distr, sector)  # devuelve GeoDataFrame
+        # Convertir el GeoDataFrame en ee.Geometry
+        geom = ee.Geometry.Polygon(gdf.geometry.values[0].__geo_interface__['coordinates'])
+
+       # Sentinel-2
         if satellite == 'Sentinel-2':
-            collection = ee.ImageCollection("COPERNICUS/S2_SR").filterDate(start, end).median()
+            collection = (
+                ee.ImageCollection("COPERNICUS/S2_SR")
+                .filterDate(start, end)
+                .filterBounds(geom)
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', pnubosidad))
+            )
 
             if index == 'NDVI':
-                image = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
+                collection = collection.map(lambda img: img.normalizedDifference(['B8', 'B4']).rename('NDVI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDWI':
-                image = collection.normalizedDifference(['B3', 'B8']).rename('NDWI')
+                collection = collection.map(lambda img: img.normalizedDifference(['B3', 'B8']).rename('NDWI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'blue']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDBI':
-                image = collection.normalizedDifference(['B11', 'B8']).rename('NDBI')
+                collection = collection.map(lambda img: img.normalizedDifference(['B11', 'B8']).rename('NDBI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'brown']}
                 image = image.visualize(**vis_params)
 
             elif index == 'RGB':
+                image = collection.median().clip(geom)
                 vis_params = {'min': 0, 'max': 3000, 'bands': ['B4', 'B3', 'B2']}
-                image = collection.visualize(**vis_params)
+                image = image.visualize(**vis_params)
 
             else:
                 return jsonify({'error': f'Índice "{index}" no soportado para Sentinel-2'}), 400
 
+        # Landsat-8
         elif satellite == 'Landsat-8':
-            collection = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").filterDate(start, end).median()
+            collection = (
+                ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+                .filterDate(start, end)
+                .filterBounds(geom)
+                .filter(ee.Filter.lt('CLOUD_COVER', pnubosidad))
+            )
+
+            def to_sr(img):
+                return img.select('SR_B.').multiply(0.0000275).add(-0.2).copyProperties(img, ["system:time_start"])
+
+            collection = collection.map(to_sr)
 
             if index == 'NDVI':
-                image = collection.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDWI':
-                image = collection.normalizedDifference(['SR_B3', 'SR_B5']).rename('NDWI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B3', 'SR_B5']).rename('NDWI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'blue']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDBI':
-                image = collection.normalizedDifference(['SR_B6', 'SR_B5']).rename('NDBI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B6', 'SR_B5']).rename('NDBI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'brown']}
                 image = image.visualize(**vis_params)
 
             elif index == 'RGB':
-                vis_params = {'min': 0, 'max': 30000, 'bands': ['SR_B4', 'SR_B3', 'SR_B2']}
-                image = collection.visualize(**vis_params)
+                image = collection.median().clip(geom)
+                vis_params = {'min': 0, 'max': 0.8, 'bands': ['SR_B4', 'SR_B3', 'SR_B2']}
+                image = image.visualize(**vis_params)
 
             else:
                 return jsonify({'error': f'Índice "{index}" no soportado para Landsat-8'}), 400
 
+        # Landsat-9
         elif satellite == 'Landsat-9':
-            collection = ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").filterDate(start, end).median()
+            collection = (
+                ee.ImageCollection("LANDSAT/LC09/C02/T1_L2")
+                .filterDate(start, end)
+                .filterBounds(geom)
+                .filter(ee.Filter.lt('CLOUD_COVER', pnubosidad))
+            )
+
+            def to_sr(img):
+                return img.select('SR_B.').multiply(0.0000275).add(-0.2).copyProperties(img, ["system:time_start"])
+
+            collection = collection.map(to_sr)
 
             if index == 'NDVI':
-                image = collection.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDWI':
-                image = collection.normalizedDifference(['SR_B3', 'SR_B5']).rename('NDWI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B3', 'SR_B5']).rename('NDWI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'blue']}
                 image = image.visualize(**vis_params)
 
             elif index == 'NDBI':
-                image = collection.normalizedDifference(['SR_B6', 'SR_B5']).rename('NDBI')
+                collection = collection.map(lambda img: img.normalizedDifference(['SR_B6', 'SR_B5']).rename('NDBI'))
+                image = collection.median().clip(geom)
                 vis_params = {'min': -1, 'max': 1, 'palette': ['white', 'brown']}
                 image = image.visualize(**vis_params)
 
             elif index == 'RGB':
-                vis_params = {'min': 0, 'max': 30000, 'bands': ['SR_B4', 'SR_B3', 'SR_B2']}
-                image = collection.visualize(**vis_params)
+                image = collection.median().clip(geom)
+                vis_params = {'min': 0, 'max': 0.8, 'bands': ['SR_B4', 'SR_B3', 'SR_B2']}
+                image = image.visualize(**vis_params)
 
             else:
                 return jsonify({'error': f'Índice "{index}" no soportado para Landsat-9'}), 400
