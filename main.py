@@ -155,13 +155,11 @@ def get_map_id():
             return jsonify({'error': 'Satélite no soportado'}), 400
 
         # Obtener map ID
-        map_id = ee.data.getMapId({'image': image})
+        tile_info = ee.data.getMapId({'image': image})
 
         return jsonify({
-            'mapid': map_id['mapid'],
-            'token': map_id['token']
+            'tile_url': tile_info['tile_fetcher'].url_format  # Esta es la URL correcta que espera Leaflet
         })
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
