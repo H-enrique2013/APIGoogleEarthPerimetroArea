@@ -158,7 +158,8 @@ def get_map_id():
         tile_info = ee.data.getMapId({'image': image})
 
         return jsonify({
-            'tile_url': tile_info['tile_fetcher'].url_format  # Esta es la URL correcta que espera Leaflet
+            'tile_url': tile_info['tile_fetcher'].url_format,# Esta es la URL correcta que espera Leaflet
+            'idindex':index +" GEE"
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
