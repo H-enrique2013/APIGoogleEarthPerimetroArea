@@ -35,13 +35,12 @@ def get_map_id():
         gdf = sectorEstadistico(dep, prov, distr, sector)  # devuelve GeoDataFrame
         # Convertir el GeoDataFrame en ee.Geometry
         geom = ee.Geometry.Polygon(gdf.geometry.values[0].__geo_interface__['coordinates'])
-
        # Sentinel-2
         if satellite == 'Sentinel-2':
             collection = (
                 ee.ImageCollection("COPERNICUS/S2_SR")
                 .filterDate(start, end)
-                .filterBounds(geom)
+                #.filterBounds(geom)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', pnubosidad))
             )
 
