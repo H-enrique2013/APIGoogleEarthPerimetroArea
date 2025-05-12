@@ -113,7 +113,7 @@ def sectorEstadistico(dep,prov,distr,sector):
         url=dic_url[0]
         path_map=os.path.join(url)
         if not os.path.exists(path_map):
-                print("Contenido de la carpeta 'shape':", os.listdir('shape'))
+                #print("Contenido de la carpeta 'shape':", os.listdir('shape'))
                 raise ValueError(f"No se encontraron archivos en la ruta '{path_map}'")
         
         shape_sector=gpd.read_file(path_map)
@@ -126,7 +126,6 @@ def sectorEstadistico(dep,prov,distr,sector):
         return sect_estadistico
 
 #valor=sectorEstadistico('PUNO','LAMPA','PALCA','CHULLUNQUIANI')
-
 #print(valor)
 #print('-------------------------')
 #print(type(valor[['geometry']]))

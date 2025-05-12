@@ -14,7 +14,6 @@ init_earth_engine()
 def hello():
     return "API Flask con Earth Engine"
 
-
 @app.route('/getMapId', methods=['POST'])
 def getMapId():
     data = request.get_json()
