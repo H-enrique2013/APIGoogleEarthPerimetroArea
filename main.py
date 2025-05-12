@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from model import sectorEstadistico
 import json
+from shapely.ops import unary_union
 from utils.earth_engine import init_earth_engine
 import ee
 
@@ -38,7 +39,14 @@ def getMapId():
         if gdf_filtrado.empty:
             return jsonify({'error': 'No se encontró el polígono para los parámetros proporcionados'}), 400
 
-        poligono_geojson = gdf_filtrado.iloc[0].geometry.__geo_interface__
+        # Si hay más de una geometría, unirlas
+        if len(gdf_filtrado) > 1:
+            geom_unida = unary_union(gdf_filtrado.geometry)
+        else:
+            geom_unida = gdf_filtrado.iloc[0].geometry
+
+        # Convertir a geo_interface para Earth Engine
+        poligono_geojson = geom_unida.__geo_interface__
         roi = ee.Geometry(poligono_geojson)
 
         # Selección de colección
