@@ -104,7 +104,18 @@ def getMapId():
         if index_img is None:
             return jsonify({'error': 'Índice no reconocido'}), 400
 
-        vis_params = {'min': 0, 'max': 1, 'palette': ['blue', 'white', 'green']} if index != 'RGB' else {}
+        if index == 'NDVI':
+            vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
+        elif index == 'NDWI':
+            vis_params = {'min': -1, 'max': 1, 'palette': ['brown', 'white', 'cyan']}
+        elif index == 'NDBI':
+            vis_params = {'min': -1, 'max': 1, 'palette': ['purple', 'white', 'orange']}
+        elif index == 'EVI':
+            vis_params = {'min': -1, 'max': 1, 'palette': ['red', 'white', 'darkgreen']}
+        elif index == 'RGB':
+            vis_params = {}
+        else:
+            vis_params = {'min': -1, 'max': 1}
 
         map_id_dict = ee.Image(index_img).getMapId(vis_params)
 
