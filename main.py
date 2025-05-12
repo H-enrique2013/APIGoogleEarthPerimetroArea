@@ -39,7 +39,7 @@ def getMapId():
             return jsonify({'error': 'No se encontró el polígono para los parámetros proporcionados'}), 400
 
         poligono_geojson = gdf_filtrado.iloc[0].geometry.__geo_interface__
-        roi = ee.Geometry.Polygon(poligono_geojson['coordinates'])
+        roi = ee.Geometry(poligono_geojson)
 
         # Selección de colección
         def get_collection(sat):
@@ -64,7 +64,8 @@ def getMapId():
         if collection.size().getInfo() == 0:
             return jsonify({'error': 'No hay imágenes disponibles para los parámetros seleccionados'}), 400
 
-        image = collection.sort('system:time_start', False).first().clip(roi)
+        #image = collection.sort('system:time_start', False).first().clip(roi)
+        image = collection.median().clip(roi)
 
         # Aplicar escala para Landsat
         if psatelite in ['Landsat-8', 'Landsat-9']:
