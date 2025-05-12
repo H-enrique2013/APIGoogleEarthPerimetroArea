@@ -71,8 +71,21 @@ def getMapId():
         if collection.size().getInfo() == 0:
             return jsonify({'error': 'No hay imágenes disponibles para los parámetros seleccionados'}), 400
 
-        #image = collection.sort('system:time_start', False).first().clip(roi)
-        image = collection.median().clip(roi)
+        # Usamos mosaic para evitar huecos en la visualización
+        image = collection.mosaic().clip(roi)
+
+        # Verificamos si la imagen tiene datos válidos en el polígono
+        stats = image.reduceRegion(
+            reducer=ee.Reducer.count(),
+            geometry=roi,
+            scale=30,
+            maxPixels=1e13
+        ).getInfo()
+
+        # Si todas las bandas tienen cero píxeles válidos, entonces no hay cobertura útil
+        if not any(value > 0 for value in stats.values()):
+            return jsonify({'error': 'La imagen resultante no contiene datos válidos dentro del polígono'}), 400
+
 
         # Aplicar escala para Landsat
         if psatelite in ['Landsat-8', 'Landsat-9']:
