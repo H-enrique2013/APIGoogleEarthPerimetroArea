@@ -40,7 +40,7 @@ def get_map_id():
             collection = (
                 ee.ImageCollection("COPERNICUS/S2_SR")
                 .filterDate(start, end)
-                #.filterBounds(geom)
+                .filterBounds(geom)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', pnubosidad))
             )
 
@@ -87,6 +87,11 @@ def get_map_id():
             if index == 'NDVI':
                 collection = collection.map(lambda img: img.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI'))
                 image = collection.median().clip(geom)
+                info = collection.size().getInfo()
+                print(f'Número de imágenes en colección: {info}')
+                if info == 0:
+                    return jsonify({'error': 'No hay imágenes para los parámetros seleccionados'}), 400
+                    
                 vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
                 image = image.visualize(**vis_params)
 
@@ -157,7 +162,7 @@ def get_map_id():
         tile_info = ee.data.getMapId({'image': image})
 
         return jsonify({
-            'tile_url': tile_info['tile_fetcher'].url_format,# Esta es la URL correcta que espera Leaflet
+            'tile_url': tile_info['tile_fetcher'].url_format,
             'idindex':index +" (GEE)"
         })
     except Exception as e:

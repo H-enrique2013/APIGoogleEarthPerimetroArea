@@ -21,8 +21,7 @@ def init_earth_engine():
     )
 
     ee.Initialize(credentials)
-
-
+    
 ''' 
 def init_earth_engine():
     credentials = ee.ServiceAccountCredentials(
