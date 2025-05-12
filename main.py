@@ -33,9 +33,9 @@ def getMapId():
             return jsonify({'error': 'Faltan parámetros obligatorios'}), 400
 
         # Leer shapefile y filtrar por sector
-        gdf = sectorEstadistico(dep, prov, distr, sector)
+        gdf_filtrado = sectorEstadistico(dep, prov, distr, sector)
         
-        if gdf.empty:
+        if gdf_filtrado.empty:
             return jsonify({'error': 'No se encontró el polígono para los parámetros proporcionados'}), 400
 
         poligono_geojson = gdf_filtrado.iloc[0].geometry.__geo_interface__
