@@ -91,7 +91,7 @@ def get_map_id():
                 print(f'Número de imágenes en colección: {info}')
                 if info == 0:
                     return jsonify({'error': 'No hay imágenes para los parámetros seleccionados'}), 400
-                    
+
                 vis_params = {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}
                 image = image.visualize(**vis_params)
 
@@ -159,10 +159,13 @@ def get_map_id():
             return jsonify({'error': 'Satélite no soportado'}), 400
 
         # Obtener map ID
-        tile_info = ee.data.getMapId({'image': image})
+        #tile_info = ee.data.getMapId({'image': image})
+        map_id_dict = image.getMapId()
+
 
         return jsonify({
-            'tile_url': tile_info['tile_fetcher'].url_format,
+            #'tile_url': tile_info['tile_fetcher'].url_format,
+            'tile_url': map_id_dict['tile_fetcher'].url_format,
             'idindex':index +" (GEE)"
         })
     except Exception as e:
