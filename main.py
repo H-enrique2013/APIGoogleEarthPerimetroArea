@@ -34,14 +34,8 @@ def getMapId():
 
         # Leer shapefile y filtrar por sector
         gdf = sectorEstadistico(dep, prov, distr, sector)
-        gdf_filtrado = gdf[
-            (gdf['DEPARTAMEN'] == dep) &
-            (gdf['PROVINCIA'] == prov) &
-            (gdf['DISTRITO'] == distr) &
-            (gdf['SECTOR'] == sector)
-        ]
-
-        if gdf_filtrado.empty:
+        
+        if gdf.empty:
             return jsonify({'error': 'No se encontró el polígono para los parámetros proporcionados'}), 400
 
         poligono_geojson = gdf_filtrado.iloc[0].geometry.__geo_interface__
