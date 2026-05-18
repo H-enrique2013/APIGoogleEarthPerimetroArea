@@ -29,4 +29,4 @@ def init_earth_engine():
         key_file='service-account.json'
     )
     ee.Initialize(credentials)
-''' 
+'''
